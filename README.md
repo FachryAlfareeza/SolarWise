@@ -1,6 +1,6 @@
 # SolarWise
 
-(description)
+SolarWise is a climate action web application designed to map and estimate the benefits of solar panel installations. Utilising geospatial weather data, the platform helps homeowners, businesses, and local governments identify high-potential areas for solar energy and calculates the estimated electrical output for specific coordinates.
 
 ## TIF Team
 
