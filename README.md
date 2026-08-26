@@ -4,6 +4,6 @@
 
 ## TIF Team
 
-Ketua Kelompok:
-Anggota 1:
-Anggota 2: Monica Anastasya Dantina - 24/544527/TK60525
+Back-End Developer : Muhammad Fachry Alfareeza - 24/540199/TK/59922
+Software Architect : 
+Front-End Developer: Monica Anastasya Dantina - 24/544527/TK/60525
