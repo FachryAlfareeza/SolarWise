@@ -10,4 +10,4 @@ Front-End Developer: Monica Anastasya Dantina - 24/544527/TK/60525
   
 ### Class Diagram
 
-![Class Diagram](images/SolarWise_ClassDiagram.png)
+![Class Diagram](SolarWise_ClassDiagram.png)
