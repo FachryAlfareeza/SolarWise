@@ -7,3 +7,7 @@ SolarWise is a climate action web application designed to map and estimate the b
 Back-End Developer : Muhammad Fachry Alfareeza - 24/540199/TK/59922  
 Software Architect : Muhammad Ilkham Abdillah - 24/537977/TK/59653  
 Front-End Developer: Monica Anastasya Dantina - 24/544527/TK/60525
+
+### Class Diagram
+
+![Class Diagram](Modul3_DesainClass/SolarWise_ClassDiagram.png)
