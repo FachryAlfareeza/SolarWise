@@ -1,4 +1,4 @@
-namespace MySolarApp.Core.Models;
+namespace SolarWise.Core.Models;
 
 public class User
 {
