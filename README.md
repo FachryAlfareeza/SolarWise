@@ -14,4 +14,4 @@ Front-End Developer: Monica Anastasya Dantina - 24/544527/TK/60525
 
 ### Entity Relationship Diagram
 
-![Entity Relationship Diagram](Modul3_DesainClass/SolarWise_ERD.png)
+![Entity Relationship Diagram](Modul3_DesainClass/ERD_SolarWise.png)
