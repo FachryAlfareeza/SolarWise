@@ -1,48 +1,41 @@
-using SolarWise.Core.Models;
+using System.Security.Cryptography;
+using System.Text;
 
-namespace SolarWise.Core.Services;
+namespace SolarWise;
 
-public class AuthService
+// Accounts: login, registration and uniqueness checks.
+public static class AuthService
 {
-    public async Task<bool> RegisterAsync(User user)
+    // Prototype only: a real system needs a salted password hash (for example, ASP.NET Identity or BCrypt).
+    public static string Hash(string value) =>
+        Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(value)));
+
+    public static User Authenticate(string login, string password)
     {
-        // Logic registrasi user ke database
-        await Task.CompletedTask;
-        return true;
+        string hash = Hash(password);
+        return DataStore.Users.FirstOrDefault(u =>
+            (string.Equals(u.Username, login, StringComparison.OrdinalIgnoreCase)
+             || string.Equals(u.EmailAddress, login, StringComparison.OrdinalIgnoreCase))
+            && u.PasswordHash == hash);
     }
 
-    public async Task<User?> LoginAsync(string username, string password)
-    {
-        // Logic autentikasi user
-        await Task.CompletedTask;
-        return null;
-    }
+    public static bool EmailTaken(string email, User except = null) =>
+        DataStore.Users.Any(u => u != except && string.Equals(u.EmailAddress, email, StringComparison.OrdinalIgnoreCase));
 
-    public List<Recommendation> ViewRecommendations(int userId)
-    {
-        // Fetch riwayat rekomendasi milik user
-        return new List<Recommendation>();
-    }
+    public static bool UsernameTaken(string username, User except = null) =>
+        DataStore.Users.Any(u => u != except && string.Equals(u.Username, username, StringComparison.OrdinalIgnoreCase));
 
-    // Aksi Khusus Admin
-    public async Task<bool> AddSolarPanelAsync(SolarPanel panel)
+    public static User Register(string fullName, string username, string email, string password)
     {
-        await Task.CompletedTask;
-        return true;
-    }
-
-    public List<User> ViewUsers()
-    {
-        return new List<User>();
-    }
-
-    public bool EditUser(User user)
-    {
-        return true;
-    }
-
-    public bool EditCalculations()
-    {
-        return true;
+        var user = new User
+        {
+            UserID = DataStore.NextId(),
+            FullName = fullName,
+            Username = username,
+            EmailAddress = email,
+            PasswordHash = Hash(password)
+        };
+        DataStore.Users.Add(user);
+        return user;
     }
 }

@@ -1,6 +1,18 @@
-coba2/
-obj/
+# Build output
 bin/
+obj/
+
+# Visual Studio per-user and cache files
 .vs/
-program.cs
-SolarWise.csproj
+*.user
+*.suo
+*.userprefs
+*.cache
+
+# Generated screenshots (rebuilt from the app whenever you need them)
+screenshots/
+
+# OneDrive and Windows junk
+desktop.ini
+Thumbs.db
+~$*
