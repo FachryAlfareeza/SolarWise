@@ -7,6 +7,9 @@ internal static class Program
     {
         Application.SetCompatibleTextRenderingDefault(false);
 
+        //SolarWise.Database.SupabaseConnection.TestConnection(out string pesan);
+        //MessageBox.Show(pesan);
+
         // Login -> main window; logging out returns to the login screen.
         while (true)
         {
