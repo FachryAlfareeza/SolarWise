@@ -16,3 +16,5 @@ screenshots/
 desktop.ini
 Thumbs.db
 ~$*
+
+.env
