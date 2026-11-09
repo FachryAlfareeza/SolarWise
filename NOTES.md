@@ -25,7 +25,7 @@ Not built (from CLAUDE.md, for time reasons): organization settings, organizatio
 9. **Passwords** are stored as SHA-256 hashes with no salt. This is a prototype only; production needs a salted, slow hash (for example ASP.NET Identity or BCrypt).
 10. **Payback period and installation cost** are not calculated: the ERD has no cost model.
 
-## Formulas and assumptions (`Core/SolarCalculator.cs`)
+## Formulas and assumptions (`Domain/Services/SolarCalculationService.cs`)
 
 - Panel area = Wattage / (1000 x efficiency), at 1000 W/m².
 - Panel count = floor(input area / panel area).
