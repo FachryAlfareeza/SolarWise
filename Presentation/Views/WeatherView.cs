@@ -2,55 +2,49 @@ namespace SolarWise;
 
 public class WeatherView : ViewBase
 {
-    private readonly ComboBox locationCombo = Ui.NewCombo(new Point(150, 24), 420);
-    private readonly DateTimePicker datePicker = new() { Location = new Point(150, 56), Width = 200, Format = DateTimePickerFormat.Short, Font = Theme.UiFont };
-    private readonly Label statusLabel = Ui.NewLabel("Status: not loaded", new Point(600, 60), Theme.BoldFont);
-    private readonly Label irradianceValue = Ui.NewLabel("-", new Point(230, 26));
-    private readonly Label temperatureValue = Ui.NewLabel("-", new Point(230, 52));
-    private readonly Label sunshineValue = Ui.NewLabel("-", new Point(230, 78));
-    private readonly Label averageValue = Ui.NewLabel("-", new Point(230, 104));
-    private readonly Label sourceValue = Ui.NewLabel("-", new Point(230, 130));
+    private static readonly string[] MonthNames =
+        { "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" };
+
+    private readonly TextBox placeBox = Ui.NewText(new Point(150, 24), 350);
+    private readonly ComboBox locationCombo = Ui.NewCombo(new Point(150, 60), 350);
+    private readonly Label statusLabel = Ui.NewLabel("Enter an Indonesian city or region.", new Point(16, 190), Theme.BoldFont);
+    private readonly Label coordinatesValue = Ui.NewLabel("-", new Point(150, 24));
+    private readonly Label averageValue = Ui.NewLabel("-", new Point(250, 24), Theme.BoldFont);
+    private readonly ListView monthList = Ui.NewList(new Point(16, 226), new Size(800, 210),
+        ("Month", 220), ("Solar irradiance (kWh/m²/day)", 300), ("Source", 240));
     private readonly ClassicButton fetchButton;
 
     public WeatherView(MainForm host) : base(host, "Weather Data")
     {
-        AddHeader("Weather Data", "Weather values appear only when retrieved from a data source. No live weather API is connected in this prototype.");
+        AddHeader("Solar Irradiance by Region", "Search a region with Open-Meteo, then load NASA POWER monthly solar climatology.");
 
-        var location = Ui.NewGroup("Location and Date", new Rectangle(16, 70, 800, 96));
-        location.Controls.Add(Ui.NewLabel("Location:", new Point(20, 28)));
+        var location = Ui.NewGroup("Region Lookup", new Rectangle(16, 70, 800, 106));
+        location.Controls.Add(Ui.NewLabel("Region or city:", new Point(20, 28)));
+        location.Controls.Add(placeBox);
+        fetchButton = Ui.NewButton("Fetch Weather Data", new Point(515, 23), async (_, _) => await FetchAsync(), 170, true);
+        location.Controls.Add(fetchButton);
+        location.Controls.Add(Ui.NewLabel("Saved location:", new Point(20, 64)));
         location.Controls.Add(locationCombo);
-        location.Controls.Add(Ui.NewLabel("Date:", new Point(20, 60)));
-        location.Controls.Add(datePicker);
-        location.Controls.Add(statusLabel);
+        location.Controls.Add(Ui.NewButton("Refresh", new Point(515, 59), (_, _) => ShowSavedClimatology(), 90));
+        location.Controls.Add(Ui.NewLabel("Coordinates:", new Point(610, 64)));
+        location.Controls.Add(coordinatesValue);
         Controls.Add(location);
 
-        var values = Ui.NewGroup("Weather Values", new Rectangle(16, 178, 800, 160));
-        values.Controls.Add(Ui.NewLabel("Solar irradiance (kWh/m²/day):", new Point(20, 26)));
-        values.Controls.Add(irradianceValue);
-        values.Controls.Add(Ui.NewLabel("Temperature (°C):", new Point(20, 52)));
-        values.Controls.Add(temperatureValue);
-        values.Controls.Add(Ui.NewLabel("Sunshine hours (h/day):", new Point(20, 78)));
-        values.Controls.Add(sunshineValue);
-        values.Controls.Add(Ui.NewLabel("Average irradiance, saved records:", new Point(20, 104)));
-        values.Controls.Add(averageValue);
-        values.Controls.Add(Ui.NewLabel("Data source:", new Point(20, 130)));
-        values.Controls.Add(sourceValue);
-        Controls.Add(values);
+        Controls.Add(statusLabel);
+        Controls.Add(monthList);
 
-        fetchButton = Ui.NewButton("Fetch Weather Data", new Point(16, 356), (_, _) => Fetch(), 150, true);
-        Controls.Add(fetchButton);
-        Controls.Add(Ui.NewButton("Refresh", new Point(174, 356), (_, _) => ShowRecord(), 90));
-        Controls.Add(Ui.NewButton("Load Sample Data", new Point(272, 356), (_, _) => LoadSample(), 140));
-        Controls.Add(Ui.NewButton("Close", new Point(420, 356), (_, _) => Host.OpenSection("Home"), 90));
+        var summary = Ui.NewGroup("Annual Irradiance Used by Calculator", new Rectangle(16, 448, 800, 62));
+        summary.Controls.Add(Ui.NewLabel("Day-weighted average:", new Point(20, 24)));
+        summary.Controls.Add(averageValue);
+        Controls.Add(summary);
 
         var note = Ui.NewLabel(
-            "Sample data is labelled as sample and is not live weather data. It is used only when a location has no weather record.",
-            new Point(16, 400), null, Color.FromArgb(64, 64, 64));
+            "NASA POWER climatology is a long-term monthly average, not a live forecast. Monthly values are saved for this account and used by the solar calculator.",
+            new Point(16, 516), null, Color.FromArgb(64, 64, 64));
         note.MaximumSize = new Size(800, 0);
         Controls.Add(note);
 
-        locationCombo.SelectedIndexChanged += (_, _) => ShowRecord();
-        datePicker.ValueChanged += (_, _) => ShowRecord();
+        locationCombo.SelectedIndexChanged += (_, _) => ShowSavedClimatology();
         Reload();
     }
 
@@ -59,89 +53,80 @@ public class WeatherView : ViewBase
         var selected = locationCombo.SelectedItem as SiteLocation;
         locationCombo.Items.Clear();
         foreach (var site in LocationRepository.LocationsFor(SessionContext.CurrentUser)) locationCombo.Items.Add(site);
+
         if (selected != null && locationCombo.Items.Contains(selected)) locationCombo.SelectedItem = selected;
         else if (locationCombo.Items.Count > 0) locationCombo.SelectedIndex = 0;
-        ShowRecord();
+        else ClearDisplay("No saved locations yet. Enter a region above to fetch its solar climatology.");
     }
 
-    private SiteLocation SelectedSite => locationCombo.SelectedItem as SiteLocation;
-
-    private void ShowRecord()
+    private async Task FetchAsync()
     {
-        var site = SelectedSite;
-        if (site == null)
+        string place = placeBox.Text.Trim();
+        if (place.Length == 0)
         {
-            irradianceValue.Text = temperatureValue.Text = sunshineValue.Text = averageValue.Text = sourceValue.Text = "-";
-            statusLabel.Text = "Status: add a location first";
+            Ui.Fail("Enter an Indonesian city, regency, or region.", placeBox);
             return;
         }
 
-        var average = WeatherRepository.ForLocation(site);
-        averageValue.Text = average.Count == 0 ? "No saved records" : Theme.Num(average.Average(w => w.SolarIrradiance), "0.00");
-
-        var record = WeatherService.WeatherFor(site, datePicker.Value);
-        if (record == null)
-        {
-            irradianceValue.Text = temperatureValue.Text = sunshineValue.Text = "-";
-            sourceValue.Text = "-";
-            statusLabel.Text = "Status: weather data unavailable for this date";
-            statusLabel.ForeColor = Color.Black;
-            return;
-        }
-
-        irradianceValue.Text = Theme.Num(record.SolarIrradiance, "0.00");
-        temperatureValue.Text = Theme.Num(record.Temperature, "0.0");
-        sunshineValue.Text = Theme.Num(record.SunshineHours, "0.0");
-        sourceValue.Text = record.IsSample ? "SAMPLE data (not live)" : "Saved weather data";
-        statusLabel.Text = record.IsSample ? "Status: sample data loaded" : "Status: loaded";
-        statusLabel.ForeColor = record.IsSample ? Color.Black : Theme.SuccessGreen;
-    }
-
-    private void Fetch()
-    {
-        var site = SelectedSite;
-        if (site == null)
-        {
-            ClassicMessage.Info(this, "Add a location first.", "Fetch Weather Data");
-            return;
-        }
-
-        // Loading state, then the honest result: no weather API is connected.
-        statusLabel.Text = "Status: loading...";
+        fetchButton.Enabled = false;
+        statusLabel.Text = "Status: finding region and fetching NASA POWER data...";
         statusLabel.ForeColor = Color.Black;
-        Application.DoEvents();
-
-        statusLabel.Text = "Status: unavailable";
-        statusLabel.ForeColor = Theme.ErrorRed;
-        ClassicMessage.Error(this,
-            "Weather data unavailable. No weather API is connected in this prototype, so no live values were retrieved.",
-            "Fetch Weather Data");
+        try
+        {
+            var site = await WeatherService.FetchAndSaveClimatologyAsync(place, SessionContext.CurrentUser);
+            Reload();
+            locationCombo.SelectedItem = site;
+            statusLabel.Text = $"Status: climatology loaded for {site.Address}";
+            statusLabel.ForeColor = Theme.SuccessGreen;
+        }
+        catch (Exception ex)
+        {
+            statusLabel.Text = "Status: fetch failed";
+            statusLabel.ForeColor = Theme.ErrorRed;
+            ClassicMessage.Error(this, ex.Message, "Fetch Weather Data");
+        }
+        finally
+        {
+            fetchButton.Enabled = true;
+        }
     }
 
-    private void LoadSample()
+    private void ShowSavedClimatology()
     {
-        var site = SelectedSite;
-        if (site == null)
+        if (locationCombo.SelectedItem is not SiteLocation site)
         {
-            ClassicMessage.Info(this, "Add a location first.", "Load Sample Data");
-            return;
-        }
-        if (WeatherService.WeatherFor(site, datePicker.Value) != null)
-        {
-            ClassicMessage.Info(this, "A weather record already exists for this location and date.", "Load Sample Data");
+            ClearDisplay("Select a saved location or search for an Indonesian region above.");
             return;
         }
 
-        WeatherRepository.Add(new WeatherData
+        var coordinates = site.GetCoordinates();
+        coordinatesValue.Text = $"{coordinates.Lat:0.####}, {coordinates.Lon:0.####}";
+        monthList.Items.Clear();
+        var monthly = WeatherService.MonthlyClimatologyFor(site);
+        foreach (var record in monthly)
         {
-            Location = site,
-            Date = datePicker.Value.Date,
-            SolarIrradiance = SolarCalculator.DefaultIrradiance,
-            Temperature = 29.5,
-            SunshineHours = 6.4,
-            IsSample = true
-        });
-        ShowRecord();
-        ClassicMessage.Info(this, "Sample values loaded. They are labelled as sample and are not live weather data.", "Load Sample Data");
+            Ui.AddRow(monthList, record,
+                MonthNames[record.Date.Month - 1],
+                Theme.Num(record.SolarIrradiance, "0.00"),
+                "NASA POWER climatology");
+        }
+
+        var average = WeatherService.SavedIrradiance(site);
+        averageValue.Text = average.HasValue
+            ? $"{Theme.Num(average.Value, "0.00")} kWh/m²/day"
+            : "No data";
+        statusLabel.Text = monthly.Count == 12
+            ? $"Status: {site.Address} · {monthly.Count} monthly values"
+            : $"Status: no NASA POWER climatology saved for {site.Address}";
+        statusLabel.ForeColor = monthly.Count == 12 ? Theme.SuccessGreen : Color.Black;
+    }
+
+    private void ClearDisplay(string message)
+    {
+        coordinatesValue.Text = "-";
+        averageValue.Text = "-";
+        monthList.Items.Clear();
+        statusLabel.Text = message;
+        statusLabel.ForeColor = Color.Black;
     }
 }
