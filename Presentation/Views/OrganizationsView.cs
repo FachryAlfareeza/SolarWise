@@ -41,7 +41,7 @@ public class OrganizationsView : ViewBase
         list.Items.Clear();
         foreach (var org in OrganizationRepository.OrganizationsFor(user))
         {
-            string status = org == SessionContext.ActiveOrganization ? "Active" : "Available";
+            string status = Equals(org, SessionContext.ActiveOrganization) ? "Active" : "Available";
             Ui.AddRow(list, org,
                 org.Name,
                 MembershipRepository.RoleIn(user, org),
@@ -72,6 +72,8 @@ public class OrganizationsView : ViewBase
 
         using var dialog = new OrganizationEditDialog(org);
         if (dialog.ShowDialog(this) != DialogResult.OK) return;
+        OrganizationRepository.UpdateOrganization(org);
+        if (Equals(org, SessionContext.ActiveOrganization)) SessionContext.ActiveOrganization = org;
         Host.OrganizationChanged();
     }
 

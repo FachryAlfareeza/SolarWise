@@ -2,6 +2,10 @@ namespace SolarWise;
 
 public class SolarCalculation
 {
+    // Objects loaded from the database are new instances each time, so saved ones are equal by ID.
+    public override bool Equals(object obj) =>
+        obj is SolarCalculation other && (CalculationID > 0 ? other.CalculationID == CalculationID : ReferenceEquals(this, other));
+    public override int GetHashCode() => CalculationID > 0 ? CalculationID.GetHashCode() : base.GetHashCode();
     public int CalculationID { get; set; }
     public int OwnerUserID { get; set; }
     public int OrganizationID { get; set; }     // 0 = no organization (prototype extension)

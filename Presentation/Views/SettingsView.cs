@@ -83,6 +83,7 @@ public class SettingsView : ViewBase
         user.Username = username;
         user.EmailAddress = email;
         if (changingPassword) user.PasswordHash = AuthService.Hash(newPasswordBox.Text);
+        UserRepository.UpdateUser(user);
 
         Host.RefreshStatus();
         Reload();

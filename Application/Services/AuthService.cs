@@ -3,7 +3,7 @@ using System.Text;
 
 namespace SolarWise;
 
-// Accounts: login, registration and uniqueness checks.
+// Accounts: login, registration and uniqueness checks. Accounts live in Supabase (UserRepository).
 public static class AuthService
 {
     // Prototype only: a real system needs a salted password hash (for example, ASP.NET Identity or BCrypt).
@@ -12,30 +12,28 @@ public static class AuthService
 
     public static User Authenticate(string login, string password)
     {
-        string hash = Hash(password);
-        return UserRepository.Users.FirstOrDefault(u =>
-            (string.Equals(u.Username, login, StringComparison.OrdinalIgnoreCase)
-             || string.Equals(u.EmailAddress, login, StringComparison.OrdinalIgnoreCase))
-            && u.PasswordHash == hash);
+        var user = UserRepository.FindByLogin(login);
+        return user != null && user.PasswordHash == Hash(password) ? user : null;
     }
 
-    public static bool EmailTaken(string email, User except = null) =>
-        UserRepository.Users.Any(u => u != except && string.Equals(u.EmailAddress, email, StringComparison.OrdinalIgnoreCase));
-
-    public static bool UsernameTaken(string username, User except = null) =>
-        UserRepository.Users.Any(u => u != except && string.Equals(u.Username, username, StringComparison.OrdinalIgnoreCase));
-
-    public static User Register(string fullName, string username, string email, string password)
+    public static bool EmailTaken(string email, User except = null)
     {
-        var user = new User
+        var found = UserRepository.FindByEmail(email);
+        return found != null && (except == null || found.UserID != except.UserID);
+    }
+
+    public static bool UsernameTaken(string username, User except = null)
+    {
+        var found = UserRepository.FindByUsername(username);
+        return found != null && (except == null || found.UserID != except.UserID);
+    }
+
+    public static User Register(string fullName, string username, string email, string password) =>
+        UserRepository.AddUser(new User
         {
-            UserID = InMemoryDatabase.NextId(),
             FullName = fullName,
             Username = username,
             EmailAddress = email,
             PasswordHash = Hash(password)
-        };
-        UserRepository.Users.Add(user);
-        return user;
-    }
+        });
 }

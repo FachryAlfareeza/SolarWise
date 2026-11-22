@@ -100,6 +100,7 @@ public class HistoryView : ViewBase
         }
 
         calc.ProjectName = dialog.Value;
+        CalculationRepository.UpdateCalculation(calc);
         Reload();
     }
 

@@ -27,6 +27,10 @@ public abstract class BaseRepository<T> where T : class
     // ---- Members each table must define (polymorphism) ----
 
     protected abstract string TableName { get; }
+
+    // What SELECT reads from. A table name by default; a repository can override it with a
+    // sub-select (for example users joined with admins) and the inherited CRUD still works.
+    protected virtual string FromClause => TableName;
     protected abstract string KeyColumn { get; }
 
     // Column name -> value for INSERT and UPDATE (the key column is excluded).
@@ -50,7 +54,7 @@ public abstract class BaseRepository<T> where T : class
     {
         var result = new List<T>();
         using var conn = Open();
-        using var cmd = new NpgsqlCommand($"SELECT * FROM {TableName} ORDER BY {KeyColumn}", conn);
+        using var cmd = new NpgsqlCommand($"SELECT * FROM {FromClause} ORDER BY {KeyColumn}", conn);
         using var reader = cmd.ExecuteReader();
         while (reader.Read()) result.Add(FromRow(reader));
         return result;
@@ -59,10 +63,18 @@ public abstract class BaseRepository<T> where T : class
     public T GetById(int id)
     {
         using var conn = Open();
-        using var cmd = new NpgsqlCommand($"SELECT * FROM {TableName} WHERE {KeyColumn} = @id", conn);
+        using var cmd = new NpgsqlCommand($"SELECT * FROM {FromClause} WHERE {KeyColumn} = @id", conn);
         cmd.Parameters.AddWithValue("id", id);
         using var reader = cmd.ExecuteReader();
         return reader.Read() ? FromRow(reader) : null;
+    }
+
+    // Several rows by ID in one query (used to fill in related objects without one query per row).
+    public List<T> GetByIds(IEnumerable<int> ids)
+    {
+        var list = ids.Distinct().Select(i => (long)i).ToArray();
+        if (list.Length == 0) return new List<T>();
+        return Select($"{KeyColumn} = ANY(@ids)", ("ids", list));
     }
 
     // INSERT; the new ID from the database is written back to the entity.
@@ -106,6 +118,38 @@ public abstract class BaseRepository<T> where T : class
     }
 
     public bool Delete(T entity) => Delete(GetId(entity));
+
+    // ---- Helpers for subclasses: filtered queries. Values are always parameters. ----
+
+    // SELECT with a WHERE clause written by the subclass (never built from user input).
+    protected List<T> Select(string where, params (string Name, object Value)[] args)
+    {
+        var result = new List<T>();
+        using var conn = Open();
+        using var cmd = new NpgsqlCommand($"SELECT * FROM {FromClause} WHERE {where} ORDER BY {KeyColumn}", conn);
+        foreach (var (name, value) in args) cmd.Parameters.AddWithValue(name, value ?? DBNull.Value);
+        using var reader = cmd.ExecuteReader();
+        while (reader.Read()) result.Add(FromRow(reader));
+        return result;
+    }
+
+    // INSERT/UPDATE/DELETE written by the subclass; returns the number of rows changed.
+    protected int Execute(string sql, params (string Name, object Value)[] args)
+    {
+        using var conn = Open();
+        using var cmd = new NpgsqlCommand(sql, conn);
+        foreach (var (name, value) in args) cmd.Parameters.AddWithValue(name, value ?? DBNull.Value);
+        return cmd.ExecuteNonQuery();
+    }
+
+    // A single value (for example a COUNT) from a query written by the subclass.
+    protected object Scalar(string sql, params (string Name, object Value)[] args)
+    {
+        using var conn = Open();
+        using var cmd = new NpgsqlCommand(sql, conn);
+        foreach (var (name, value) in args) cmd.Parameters.AddWithValue(name, value ?? DBNull.Value);
+        return cmd.ExecuteScalar();
+    }
 
     // ---- Private helpers (encapsulation) ----
 

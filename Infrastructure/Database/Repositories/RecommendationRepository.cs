@@ -1,22 +1,19 @@
+using SolarWise.Database;
+
 namespace SolarWise;
 
-// Recommendations, each linked to one calculation.
+// Recommendations, each linked to one calculation. Stored in Supabase (table recomendation).
 public static class RecommendationRepository
 {
-    public static readonly List<Recommendation> Recommendations = new();
+    private static readonly RecommendationDbRepository Db = new();
 
     public static Recommendation RecommendationFor(SolarCalculation calc) =>
-        Recommendations.FirstOrDefault(r => r.CalculationID == calc.CalculationID);
+        calc.IsSaved ? Db.ForCalculation(calc.CalculationID) : null;
 
-    public static List<Recommendation> RecommendationsFor(User user)
-    {
-        var ids = CalculationRepository.CalculationsFor(user).Select(c => c.CalculationID).ToHashSet();
-        return Recommendations.Where(r => ids.Contains(r.CalculationID)).ToList();
-    }
+    public static List<Recommendation> RecommendationsFor(User user) =>
+        Db.ForCalculations(CalculationRepository.CalculationsFor(user).Select(c => c.CalculationID));
 
-    public static void AddRecommendation(Recommendation rec)
-    {
-        rec.RecommendationID = InMemoryDatabase.NextId();
-        Recommendations.Add(rec);
-    }
+    public static void AddRecommendation(Recommendation rec) => Db.Insert(rec);
+    public static bool UpdateRecommendation(Recommendation rec) => Db.Update(rec);
+    public static bool DeleteRecommendation(Recommendation rec) => Db.Delete(rec);
 }

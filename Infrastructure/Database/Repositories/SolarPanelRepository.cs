@@ -1,16 +1,17 @@
+using SolarWise.Database;
+
 namespace SolarWise;
 
-// Solar panel catalog.
+// Solar panel catalog, stored in Supabase (table solar_panels).
 public static class SolarPanelRepository
 {
-    public static readonly List<SolarPanel> Panels = new();
+    private static readonly SolarPanelDbRepository Db = new();
 
-    public static SolarPanel AddPanel(SolarPanel panel)
-    {
-        panel.PanelID = InMemoryDatabase.NextId();
-        Panels.Add(panel);
-        return panel;
-    }
+    public static List<SolarPanel> Panels => Db.GetAll();
 
-    public static void DeletePanel(SolarPanel panel) => Panels.Remove(panel);
+    public static SolarPanel AddPanel(SolarPanel panel) => Db.Insert(panel);
+    public static bool UpdatePanel(SolarPanel panel) => Db.Update(panel);
+
+    // Throws a PostgresException (23503) while saved calculations still use the panel.
+    public static void DeletePanel(SolarPanel panel) => Db.Delete(panel);
 }

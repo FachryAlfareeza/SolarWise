@@ -243,7 +243,7 @@ public class OrganizationEditDialog : ClassicForm
     {
         string name = nameBox.Text.Trim();
         if (name.Length == 0) { Ui.Fail("Organization name is required.", nameBox); return; }
-        if (OrganizationRepository.Organizations.Any(o => o != org && string.Equals(o.Name, name, StringComparison.OrdinalIgnoreCase)))
+        if (OrganizationRepository.NameTaken(name, org))
         {
             Ui.Fail("An organization with that name already exists.", nameBox);
             return;

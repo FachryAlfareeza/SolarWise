@@ -67,6 +67,9 @@ public class UsersView : ViewBase
         using var dialog = new UserEditDialog(user);
         if (dialog.ShowDialog(this) != DialogResult.OK) return;
 
+        UserRepository.UpdateUser(user);
+        if (user.UserID == SessionContext.CurrentUser?.UserID) SessionContext.CurrentUser = user;
+        Host.RefreshStatus();
         Reload();
         ClassicMessage.Info(this, "User updated.", "Edit User");
     }

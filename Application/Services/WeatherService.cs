@@ -1,23 +1,19 @@
 namespace SolarWise;
 
-// Weather records: lookups by location and date, and irradiance averages.
+// Weather records: lookups by location and date, and irradiance averages. Records live in Supabase.
 public static class WeatherService
 {
     public static WeatherData WeatherFor(SiteLocation site, DateTime date) =>
-        WeatherRepository.WeatherRecords.FirstOrDefault(w => w.Location.LocationID == site.LocationID && w.Date.Date == date.Date);
+        WeatherRepository.ForLocation(site).FirstOrDefault(w => w.Date.Date == date.Date);
 
     // Latest saved record for a location; null for temporary locations (ID 0).
     public static WeatherData LatestFor(SiteLocation site) =>
-        site.LocationID > 0
-            ? WeatherRepository.WeatherRecords.LastOrDefault(w => w.Location.LocationID == site.LocationID)
-            : null;
+        WeatherRepository.ForLocation(site).LastOrDefault();
 
     // Average irradiance of saved records; null when the location has none.
     public static double? SavedIrradiance(SiteLocation site)
     {
-        var records = WeatherRepository.WeatherRecords
-            .Where(w => site.LocationID > 0 && w.Location.LocationID == site.LocationID)
-            .ToList();
+        var records = WeatherRepository.ForLocation(site);
         return records.Count == 0 ? null : records.Average(w => w.SolarIrradiance);
     }
 }

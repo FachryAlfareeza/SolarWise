@@ -83,7 +83,7 @@ public static class Ui
     {
         foreach (ListViewItem item in list.Items)
         {
-            if (item.Tag == tag)
+            if (Equals(item.Tag, tag))
             {
                 item.Selected = true;
                 item.Focused = true;

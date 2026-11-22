@@ -6,17 +6,17 @@ internal static class Program
     private static void Main()
     {
         Application.SetCompatibleTextRenderingDefault(false);
-        InMemoryDatabase.EnsureSeeded();
+        Application.ThreadException += (_, e) => ShowDatabaseError(e.Exception);
+        Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
 
-        SolarWise.Database.SupabaseConnectionFactory.TestConnection(out string pesan);
-        MessageBox.Show(pesan);
-
-        var repo = new SolarWise.Database.SolarPanelDbRepository();
-        var panel = repo.Insert(new SolarPanel { Name = "Tes Panel", Efficiency = 21, PricePerMeter = 400000, Wattage = 500 });
-        MessageBox.Show($"INSERT ok, id = {panel.PanelID}.");
-        panel.Name = "Tes Panel (Tes Update)";
-        MessageBox.Show($"UPDATE = {repo.Update(panel)}, jumlah baris = {repo.GetAll().Count}");
-        MessageBox.Show($"DELETE = {repo.Delete(panel)}");
+        if (!SolarWise.Database.SupabaseConnectionFactory.TestConnection(out string message))
+        {
+            MessageBox.Show("Cannot connect to the Supabase database. Check the .env file and your internet connection.\n\n" + message,
+                "SolarWise", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            return;
+        }
+        try { DatabaseSeeder.EnsureSeeded(); }
+        catch (Exception ex) { ShowDatabaseError(ex); return; }
 
         // Login -> main window; logging out returns to the login screen.
         while (true)
@@ -29,4 +29,8 @@ internal static class Program
             if (!main.LogoutRequested) break;
         }
     }
+
+    // Any database failure (no network, constraint violation) is shown instead of crashing the app.
+    private static void ShowDatabaseError(Exception ex) =>
+        MessageBox.Show("Something went wrong:\n\n" + ex.Message, "SolarWise", MessageBoxButtons.OK, MessageBoxIcon.Error);
 }

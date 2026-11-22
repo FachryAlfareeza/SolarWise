@@ -76,7 +76,7 @@ public class WeatherView : ViewBase
             return;
         }
 
-        var average = WeatherRepository.WeatherRecords.Where(w => w.Location.LocationID == site.LocationID).ToList();
+        var average = WeatherRepository.ForLocation(site);
         averageValue.Text = average.Count == 0 ? "No saved records" : Theme.Num(average.Average(w => w.SolarIrradiance), "0.00");
 
         var record = WeatherService.WeatherFor(site, datePicker.Value);
@@ -132,9 +132,8 @@ public class WeatherView : ViewBase
             return;
         }
 
-        WeatherRepository.WeatherRecords.Add(new WeatherData
+        WeatherRepository.Add(new WeatherData
         {
-            WeatherDataID = InMemoryDatabase.NextId(),
             Location = site,
             Date = datePicker.Value.Date,
             SolarIrradiance = SolarCalculator.DefaultIrradiance,

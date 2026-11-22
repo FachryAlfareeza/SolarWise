@@ -31,6 +31,8 @@ public class LocationDbRepository : BaseRepository<SiteLocation>
         Address = row["address"] as string ?? ""
     };
 
+    public List<SiteLocation> ForUser(int userId) => Select("user_id = @u", ("u", (long)userId));
+
     protected override int GetId(SiteLocation site) => site.LocationID;
     protected override void SetId(SiteLocation site, int id) => site.LocationID = id;
 

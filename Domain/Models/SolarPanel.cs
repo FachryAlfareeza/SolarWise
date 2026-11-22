@@ -2,6 +2,10 @@ namespace SolarWise;
 
 public class SolarPanel
 {
+    // Objects loaded from the database are new instances each time, so saved ones are equal by ID.
+    public override bool Equals(object obj) =>
+        obj is SolarPanel other && (PanelID > 0 ? other.PanelID == PanelID : ReferenceEquals(this, other));
+    public override int GetHashCode() => PanelID > 0 ? PanelID.GetHashCode() : base.GetHashCode();
     public int PanelID { get; set; }
     public string Name { get; set; } = "";
     public double Efficiency { get; set; }     // percent

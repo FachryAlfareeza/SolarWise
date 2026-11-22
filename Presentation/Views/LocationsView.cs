@@ -54,6 +54,7 @@ public class LocationsView : ViewBase
         using var dialog = new LocationEditDialog(site);
         if (dialog.ShowDialog(this) != DialogResult.OK) return;
 
+        LocationRepository.UpdateLocation(site);
         Reload();
         ClassicMessage.Info(this, "Location updated.", "Locations");
     }
@@ -66,7 +67,7 @@ public class LocationsView : ViewBase
             ClassicMessage.Info(this, "Select a location first.", "Locations");
             return;
         }
-        if (!ClassicMessage.Confirm(this, "Delete this location? Calculations already saved with it keep their results.", "Delete Location")) return;
+        if (!ClassicMessage.Confirm(this, "Delete this location? Calculations and weather records saved with it are deleted too.", "Delete Location")) return;
 
         LocationRepository.DeleteLocation(site);
         Reload();

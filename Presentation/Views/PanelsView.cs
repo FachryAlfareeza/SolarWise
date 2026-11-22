@@ -71,6 +71,7 @@ public class PanelsView : ViewBase
 
         using var dialog = new PanelEditDialog(panel, isNew: false);
         if (dialog.ShowDialog(this) != DialogResult.OK) return;
+        SolarPanelRepository.UpdatePanel(panel);
         Reload();
     }
 
@@ -82,9 +83,17 @@ public class PanelsView : ViewBase
             ClassicMessage.Info(this, "Select a panel first.", "Solar Panel Catalog");
             return;
         }
-        if (!ClassicMessage.Confirm(this, $"Delete \"{panel.Name}\" from the catalog? Saved calculations keep their results.", "Delete Solar Panel")) return;
+        if (!ClassicMessage.Confirm(this, $"Delete \"{panel.Name}\" from the catalog?", "Delete Solar Panel")) return;
 
-        SolarPanelRepository.DeletePanel(panel);
+        try
+        {
+            SolarPanelRepository.DeletePanel(panel);
+        }
+        catch (Npgsql.PostgresException ex) when (ex.SqlState == Npgsql.PostgresErrorCodes.ForeignKeyViolation)
+        {
+            ClassicMessage.Error(this, "This panel is used by saved calculations, so it cannot be deleted. Delete those calculations first.", "Delete Solar Panel");
+            return;
+        }
         Reload();
     }
 
