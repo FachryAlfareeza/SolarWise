@@ -14,4 +14,9 @@
     <PackageReference Include="Npgsql" Version="10.0.3" />
   </ItemGroup>
 
+  <!-- This is the legacy WinForms project. Do not compile generated sources from nested projects. -->
+  <ItemGroup>
+    <Compile Remove="src/**/*.cs" />
+  </ItemGroup>
+
 </Project>

@@ -5,8 +5,12 @@ namespace SolarWise;
 // Coordinates external weather lookups and persistence of NASA POWER monthly climatology.
 public static class WeatherService
 {
-    public static WeatherData WeatherFor(SiteLocation site, DateTime date) =>
-        WeatherRepository.ForLocation(site).FirstOrDefault(w => w.Date.Date == date.Date);
+    public static WeatherData WeatherFor(SiteLocation site, DateTime date)
+    {
+        var records = WeatherRepository.ForLocation(site);
+        return records.FirstOrDefault(w => w.Date.Date == date.Date)
+            ?? WeatherRepository.MonthlyClimatology(records).FirstOrDefault(w => w.Date.Month == date.Month);
+    }
 
     // Latest saved record for a location; null for temporary locations (ID 0).
     public static WeatherData LatestFor(SiteLocation site) =>
