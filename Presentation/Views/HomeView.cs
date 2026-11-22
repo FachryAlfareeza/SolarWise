@@ -2,31 +2,49 @@ namespace SolarWise;
 
 public class HomeView : ViewBase
 {
+    private const int CardCount = 2;
+
     private readonly Label welcomeLabel = Ui.NewLabel("", new Point(16, 12), Theme.HeadingFont);
-    private readonly Label orgLabel = Ui.NewLabel("", new Point(18, 42));
-    private readonly Label[] statValues = new Label[4];
-    private readonly ListView recentList = Ui.NewList(new Point(16, 228), new Size(800, 210),
-        ("Date", 80), ("Project", 120), ("Location", 190), ("Solar Panel", 160), ("Est. Output (kWh/yr)", 110), ("Est. Savings (IDR/yr)", 140));
+    private readonly Label[] statValues = new Label[CardCount];
+    private readonly GroupBox[] cards = new GroupBox[CardCount];
+    private readonly ListView recentList = Ui.NewList(new Point(16, 188), new Size(800, 240),
+        ("Date", 80), ("Project", 130), ("Location", 190), ("Solar Panel", 160), ("Est. Output (kWh/yr)", 120), ("Est. Savings (IDR/yr)", 120));
 
     public HomeView(MainForm host) : base(host, "Home")
     {
         Controls.Add(welcomeLabel);
-        Controls.Add(orgLabel);
+        Controls.Add(Ui.NewLabel("Overview of your solar calculations.", new Point(18, 42), null, Color.FromArgb(48, 48, 48)));
 
-        string[] titles = { "Total Calculations", "Total Locations", "Total Recommendations", "Estimated Savings / Year" };
-        for (int i = 0; i < titles.Length; i++)
+        // Summary cards share the full width equally and follow the window size.
+        string[] titles = { "Total Calculations", "Total Locations" };
+        for (int i = 0; i < CardCount; i++)
         {
-            var group = Ui.NewGroup(titles[i], new Rectangle(16 + i * 200, 76, 192, 84));
-            statValues[i] = Ui.NewLabel("", new Point(14, 34), Theme.NumberFont);
-            group.Controls.Add(statValues[i]);
-            Controls.Add(group);
+            cards[i] = Ui.NewGroup(titles[i], new Rectangle(16, 72, 250, 76));
+            statValues[i] = Ui.NewLabel("", new Point(14, 32), Theme.NumberFont);
+            cards[i].Controls.Add(statValues[i]);
+
+            // Quick-add button on the right edge of the card; it follows the card when resized.
+            string section = i == 0 ? "Solar PV Calculator" : "Locations";
+            var add = Ui.NewButton(i == 0 ? "Add Calculation" : "Add Location", new Point(cards[i].Width - 132, 30),
+                (_, _) => Host.OpenSection(section), 120, true);
+            add.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            cards[i].Controls.Add(add);
+            Controls.Add(cards[i]);
         }
 
-        Controls.Add(Ui.NewLabel("Records marked Sample use demo data. Savings use an assumed electricity tariff.", new Point(16, 170), null, Color.FromArgb(64, 64, 64)));
-        Controls.Add(Ui.NewLabel("Recent Calculations", new Point(16, 204), Theme.BoldFont));
+        Controls.Add(Ui.NewLabel("Recent Calculations", new Point(16, 160), Theme.BoldFont));
         Controls.Add(recentList);
-        Controls.Add(Ui.NewButton("New Calculation", new Point(16, 452), (_, _) => Host.OpenSection("Solar PV Calculator"), 150, true));
-        Controls.Add(Ui.NewButton("View All", new Point(174, 452), (_, _) => Host.OpenSection("Calculation History"), 100));
+        Controls.Add(Ui.NewLabel("Records marked Sample use demo data. Savings use an assumed electricity tariff.", new Point(16, 440), null, Color.FromArgb(64, 64, 64)));
+
+        var newButton = Ui.NewButton("New Calculation", new Point(16, 468), (_, _) => Host.OpenSection("Solar PV Calculator"), 150, true);
+        var viewAll = Ui.NewButton("View All", new Point(174, 468), (_, _) => Host.OpenSection("Calculation History"), 100);
+        Controls.Add(newButton);
+        Controls.Add(viewAll);
+
+        recentList.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+        newButton.Anchor = viewAll.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+        Resize += (_, _) => LayoutCards();
+        LayoutCards();
 
         recentList.DoubleClick += (_, _) =>
         {
@@ -37,20 +55,26 @@ public class HomeView : ViewBase
         Reload();
     }
 
+    private void LayoutCards()
+    {
+        const int margin = 16, gap = 12;
+        int width = Math.Max(120, (ClientSize.Width - margin * 2 - gap * (CardCount - 1)) / CardCount);
+        for (int i = 0; i < CardCount; i++)
+        {
+            cards[i].SetBounds(margin + i * (width + gap), 72, width, 76);
+        }
+        recentList.Width = Math.Max(300, ClientSize.Width - margin * 2);
+    }
+
     public override void Reload()
     {
         var user = SessionContext.CurrentUser;
         var calcs = CalculationRepository.CalculationsFor(user);
 
         welcomeLabel.Text = $"Welcome, {user.FullName}";
-        orgLabel.Text = SessionContext.ActiveOrganization == null
-            ? "No active organization. Use the Organization menu to select or join one."
-            : $"Active organization: {SessionContext.ActiveOrganization.Name}";
 
         statValues[0].Text = calcs.Count.ToString();
         statValues[1].Text = LocationRepository.LocationsFor(user).Count.ToString();
-        statValues[2].Text = RecommendationRepository.RecommendationsFor(user).Count.ToString();
-        statValues[3].Text = Theme.Idr(calcs.Sum(c => c.EstimateSaving));
 
         recentList.Items.Clear();
         foreach (var c in calcs.Take(5))

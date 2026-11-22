@@ -45,9 +45,8 @@ public class CalculationResultsForm : ClassicForm
         var download = Ui.NewButton("Download Report", new Point(164, 530), (_, _) => ClassicMessage.Info(this,
             "Report export is not implemented in this prototype. No file was created.", "Download Report"), 130);
         var recalculate = Ui.NewButton("Recalculate", new Point(302, 530), (_, _) => Finish(DialogResult.Retry), 100);
-        var viewRecommendation = Ui.NewButton("View Recommendation", new Point(410, 530), (_, _) => ViewRecommendation(), 130);
         var close = Ui.NewButton("Close", new Point(548, 530), (_, _) => Finish(DialogResult.Cancel), 80);
-        Content.Controls.AddRange(new Control[] { saveButton, download, recalculate, viewRecommendation, close });
+        Content.Controls.AddRange(new Control[] { saveButton, download, recalculate, close });
         saveButton.Enabled = !calc.IsSaved;
         CancelButton = close;
     }
@@ -61,15 +60,6 @@ public class CalculationResultsForm : ClassicForm
         ClassicMessage.Info(this, "Calculation saved to Calculation History.", "Save Calculation");
     }
 
-    private void ViewRecommendation()
-    {
-        if (!calc.IsSaved && ClassicMessage.Confirm(this,
-                "Recommendations are linked to saved calculations. Save this calculation now?", "View Recommendation"))
-        {
-            Save();
-        }
-        if (calc.IsSaved) Finish(DialogResult.Yes);
-    }
 }
 
 // Calculation Details: read-only view of a saved calculation with report, recalculate and delete.
@@ -93,7 +83,6 @@ public class CalculationDetailsDialog : ClassicForm
         Ui.AddPair(group, 16, ref y, "Estimated output", $"{Theme.Num(calc.EstimatedOutput)} kWh/year");
         Ui.AddPair(group, 16, ref y, "Estimated savings", $"{Theme.Idr(calc.EstimateSaving)} / year");
         Ui.AddPair(group, 16, ref y, "Weather data", calc.Weather == null ? "None (sample irradiance)" : $"{Ui.DateText(calc.Weather.Date)} (saved)");
-        Ui.AddPair(group, 16, ref y, "Recommendation", RecommendationRepository.RecommendationFor(calc) == null ? "None yet" : "1 recommendation");
         Ui.AddPair(group, 16, ref y, "Data status", Ui.StatusOf(calc));
         Content.Controls.Add(group);
 

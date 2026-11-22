@@ -22,7 +22,6 @@ public class MainForm : ClassicForm
     private readonly StatusStrip statusStrip = new() { Dock = DockStyle.Bottom, RenderMode = ToolStripRenderMode.System, SizingGrip = false };
     private readonly ToolStripStatusLabel statusText = new("Prototype: demo data is kept in memory only") { Spring = true, TextAlign = ContentAlignment.MiddleLeft };
     private readonly ToolStripStatusLabel userStatus = new();
-    private readonly ToolStripStatusLabel orgStatus = new();
     private readonly Panel viewHost = new() { Dock = DockStyle.Fill, BackColor = Theme.WindowGray };
     private ViewBase currentView;
 
@@ -33,7 +32,6 @@ public class MainForm : ClassicForm
 
         statusStrip.Items.Add(statusText);
         statusStrip.Items.Add(userStatus);
-        statusStrip.Items.Add(orgStatus);
 
         // Fill first, then the edges, so the docking lays out correctly.
         Content.Controls.Add(viewHost);
@@ -70,15 +68,6 @@ public class MainForm : ClassicForm
     {
         var user = SessionContext.CurrentUser;
         userStatus.Text = user == null ? "" : $"User: {user.Username} ({user.Role})";
-        orgStatus.Text = SessionContext.ActiveOrganization == null
-            ? "Organization: none"
-            : $"Organization: {SessionContext.ActiveOrganization.Name}";
-    }
-
-    public void OrganizationChanged()
-    {
-        RefreshStatus();
-        currentView?.Reload();
     }
 
     public void ShowCalculationDetails(SolarCalculation calc)
@@ -99,59 +88,8 @@ public class MainForm : ClassicForm
     {
         if (!ClassicMessage.Confirm(this, "Log out of SolarWise?", "Logout")) return;
         SessionContext.CurrentUser = null;
-        SessionContext.ActiveOrganization = null;
         LogoutRequested = true;
         Close();
-    }
-
-    public void SelectOrganization()
-    {
-        var orgs = OrganizationRepository.OrganizationsFor(SessionContext.CurrentUser);
-        if (orgs.Count == 0)
-        {
-            ClassicMessage.Info(this, "You are not a member of any organization yet. Create or join one first.", "Select Organization");
-            return;
-        }
-
-        using var dialog = new SelectOrganizationForm(orgs, SessionContext.ActiveOrganization);
-        if (dialog.ShowDialog(this) != DialogResult.OK) return;
-        SessionContext.ActiveOrganization = dialog.SelectedOrganization;
-        OrganizationChanged();
-    }
-
-    public bool CreateOrganization()
-    {
-        var org = new Organization();
-        using var dialog = new OrganizationEditDialog(org);
-        if (dialog.ShowDialog(this) != DialogResult.OK) return false;
-
-        OrganizationRepository.AddOrganization(org, SessionContext.CurrentUser);
-        ClassicMessage.Info(this, $"Organization \"{org.Name}\" created.\nJoin code for members: {org.JoinCode}", "Create Organization");
-        OrganizationChanged();
-        return true;
-    }
-
-    public bool JoinOrganization()
-    {
-        using var dialog = new JoinOrganizationDialog();
-        if (dialog.ShowDialog(this) != DialogResult.OK) return false;
-
-        var org = OrganizationRepository.FindByJoinCode(dialog.Code);
-        if (org == null)
-        {
-            ClassicMessage.Error(this, "Invalid organization code. Check the code and try again.", "Join Organization");
-            return false;
-        }
-        if (MembershipRepository.RoleIn(SessionContext.CurrentUser, org) != "None")
-        {
-            ClassicMessage.Info(this, $"You are already a member of {org.Name}.", "Join Organization");
-            return false;
-        }
-
-        MembershipRepository.JoinOrganization(org, SessionContext.CurrentUser);
-        ClassicMessage.Info(this, $"Joined {org.Name} as Member.", "Join Organization");
-        OrganizationChanged();
-        return true;
     }
 
     public void OpenComponentLibrary()
@@ -172,12 +110,6 @@ public class MainForm : ClassicForm
         menuStrip.Items.Add(Menu("Edit",
             Item("User Profile", (_, _) => OpenSection("Settings")),
             Item("Preferences", (_, _) => OpenSection("Settings"))));
-
-        menuStrip.Items.Add(Menu("Organization",
-            Item("Select Organization...", (_, _) => SelectOrganization()),
-            Item("Manage Organizations", (_, _) => OpenSection("Organizations")),
-            Item("Create Organization...", (_, _) => CreateOrganization()),
-            Item("Join Organization...", (_, _) => JoinOrganization())));
 
         menuStrip.Items.Add(Menu("Help",
             Item("User Guide", (_, _) => ClassicMessage.Info(this,
@@ -201,9 +133,6 @@ public class MainForm : ClassicForm
             new() { Text = "Solar PV Calculator", Create = () => new CalculatorView(this) },
             new() { Text = "Calculation History", Create = () => new HistoryView(this) },
             new() { Text = "Solar Panel Catalog", Create = () => new PanelsView(this) },
-            new() { Text = "Weather Data", Create = () => new WeatherView(this) },
-            new() { Text = "Recommendations", Create = () => new RecommendationsView(this) },
-            new() { Text = "Organizations", Create = () => new OrganizationsView(this) },
             new() { Text = "User Management", Create = () => new UsersView(this), AdminOnly = true },
             new() { Text = "Settings", Create = () => new SettingsView(this) },
         };

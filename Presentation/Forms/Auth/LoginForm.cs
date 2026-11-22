@@ -74,27 +74,6 @@ public class LoginForm : ClassicForm
         }
 
         SessionContext.CurrentUser = user;
-        var orgs = OrganizationRepository.OrganizationsFor(user);
-        if (orgs.Count == 1)
-        {
-            SessionContext.ActiveOrganization = orgs[0];
-        }
-        else if (orgs.Count > 1)
-        {
-            using var picker = new SelectOrganizationForm(orgs, null);
-            if (picker.ShowDialog(this) != DialogResult.OK)
-            {
-                SessionContext.CurrentUser = null;
-                return;
-            }
-            SessionContext.ActiveOrganization = picker.SelectedOrganization;
-        }
-        else
-        {
-            // No organization yet: the user can create or join one from the Organization menu.
-            SessionContext.ActiveOrganization = null;
-        }
-
         Finish(DialogResult.OK);
     }
 

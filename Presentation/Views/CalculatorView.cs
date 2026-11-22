@@ -231,13 +231,10 @@ public class CalculatorView : ViewBase
         }
 
         var calc = SolarCalculator.GenerateCalculation(projectBox.Text.Trim(), ResolveSite(), panel, area,
-            SessionContext.CurrentUser, SessionContext.ActiveOrganizationId);
+            SessionContext.CurrentUser);
 
         using var results = new CalculationResultsForm(calc);
-        if (results.ShowDialog(FindForm()) == DialogResult.Yes)
-        {
-            Host.ShowView(new RecommendationsView(Host, calc));
-        }
+        results.ShowDialog(FindForm());
     }
 
     // Matches the typed coordinates to a saved location, or creates a temporary one.
