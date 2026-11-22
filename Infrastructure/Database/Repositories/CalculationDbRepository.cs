@@ -18,7 +18,6 @@ public class CalculationDbRepository : BaseRepository<SolarCalculation>
         ["location_id"] = (long)c.Location.LocationID,
         ["panel_id"] = (long)c.PanelType.PanelID,
         ["weather_data_id"] = c.Weather != null && c.Weather.WeatherDataID > 0 ? (long)c.Weather.WeatherDataID : null,
-        ["organization_id"] = c.OrganizationID > 0 ? (long)c.OrganizationID : null,
         ["project_name"] = c.ProjectName ?? "",
         ["panel_type"] = c.PanelType.Name,
         ["input_area"] = (decimal)c.InputArea,
@@ -36,7 +35,6 @@ public class CalculationDbRepository : BaseRepository<SolarCalculation>
     {
         CalculationID = Convert.ToInt32(row["calculation_id"]),
         OwnerUserID = Convert.ToInt32(row["user_id"]),
-        OrganizationID = row["organization_id"] is DBNull ? 0 : Convert.ToInt32(row["organization_id"]),
         ProjectName = row["project_name"] as string ?? "",
         Location = new SiteLocation { LocationID = Convert.ToInt32(row["location_id"]) },
         PanelType = new SolarPanel { PanelID = Convert.ToInt32(row["panel_id"]) },
@@ -65,8 +63,8 @@ public class CalculationDbRepository : BaseRepository<SolarCalculation>
         if (c.PanelType == null || c.PanelType.PanelID <= 0) throw new ArgumentException("A calculation needs a saved solar panel.");
     }
 
-    // A user's calculations inside one organization (0 = no organization), newest first.
-    public List<SolarCalculation> ForUser(int userId, int organizationId) =>
-        Select("user_id = @u AND COALESCE(organization_id, 0) = @o", ("u", (long)userId), ("o", (long)organizationId))
+    // A user's calculations, newest first.
+    public List<SolarCalculation> ForUser(int userId) =>
+        Select("user_id = @u", ("u", (long)userId))
             .OrderByDescending(c => c.CreatedAt).ToList();
 }

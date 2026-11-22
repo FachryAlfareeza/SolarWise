@@ -27,7 +27,7 @@ public static class SolarCalculator
 
     // generateCalculation()
     public static SolarCalculation GenerateCalculation(string projectName, SiteLocation site, SolarPanel panel,
-        double area, User owner, int organizationId)
+        double area, User owner)
     {
         int count = FindOptimalPanelCount(area, panel);
         double kwp = count * panel.Wattage / 1000.0;
@@ -48,7 +48,6 @@ public static class SolarCalculator
             EstimatedOutput = output,
             EstimateSaving = CalculateSaving(output),
             OwnerUserID = owner.UserID,
-            OrganizationID = organizationId,
             CreatedAt = DateTime.Now,
             IsSample = weather == null
         };

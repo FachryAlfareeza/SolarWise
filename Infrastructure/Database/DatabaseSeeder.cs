@@ -1,7 +1,7 @@
 namespace SolarWise;
 
 // First-run sample data for an empty Supabase database: the two demo accounts, a small panel
-// catalog and a few organizations. Does nothing when the users table already has rows.
+// catalog. Does nothing when the users table already has rows.
 public static class DatabaseSeeder
 {
     public static void EnsureSeeded()
@@ -30,11 +30,5 @@ public static class DatabaseSeeder
             SolarPanelRepository.AddPanel(new SolarPanel { Name = "[Sample] Polycrystalline 450 Wp", Efficiency = 18.5, PricePerMeter = 380000, Wattage = 450, Description = "Sample catalog entry" });
             SolarPanelRepository.AddPanel(new SolarPanel { Name = "[Sample] Bifacial 600 Wp", Efficiency = 22.0, PricePerMeter = 520000, Wattage = 600, Description = "Sample catalog entry" });
         }
-
-        var vayu = OrganizationRepository.AddOrganization(new Organization { Name = "Vayuastra", Description = "Sample organization", JoinCode = "VAYU-2026" }, ilham);
-        var ugm = OrganizationRepository.AddOrganization(new Organization { Name = "UGM Research", Description = "Sample research group", JoinCode = "UGM-RSCH" }, admin);
-        OrganizationRepository.AddOrganization(new Organization { Name = "Project Internal", Description = "Sample internal projects", JoinCode = "PROJ-INT" }, ilham);
-        MembershipRepository.JoinOrganization(ugm, ilham);
-        MembershipRepository.JoinOrganization(vayu, admin);
     }
 }

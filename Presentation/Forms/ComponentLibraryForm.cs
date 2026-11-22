@@ -125,11 +125,11 @@ public class ComponentLibraryForm : ClassicForm
     private void BuildTree(GroupBox group)
     {
         var tree = new TreeView { Location = new Point(16, 24), Size = new Size(388, 120), Font = Theme.UiFont };
-        var org = tree.Nodes.Add("Organizations");
-        var vayu = org.Nodes.Add("Vayuastra");
-        vayu.Nodes.Add("Members");
-        vayu.Nodes.Add("Projects");
-        org.Nodes.Add("UGM Research");
+        var projects = tree.Nodes.Add("Projects");
+        var home = projects.Nodes.Add("Rooftop Home");
+        home.Nodes.Add("Calculations");
+        home.Nodes.Add("Locations");
+        projects.Nodes.Add("Office Building");
         tree.ExpandAll();
         group.Controls.Add(tree);
     }
@@ -143,7 +143,6 @@ public class ComponentLibraryForm : ClassicForm
 
         var status = new StatusStrip { Dock = DockStyle.None, Location = new Point(16, 100), RenderMode = ToolStripRenderMode.System, SizingGrip = false };
         status.Items.Add(new ToolStripStatusLabel("Ready"));
-        status.Items.Add(new ToolStripStatusLabel("Organization: Vayuastra"));
         group.Controls.Add(status);
     }
 
