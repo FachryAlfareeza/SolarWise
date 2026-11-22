@@ -10,7 +10,7 @@ public class HistoryView : ViewBase
 
     public HistoryView(MainForm host) : base(host, "Calculation History")
     {
-        AddHeader("Calculation History", "Saved calculations for your account in the active organization.");
+        AddHeader("Calculation History", "Saved calculations for your account.");
         Controls.Add(Ui.NewLabel("Search:", new Point(16, 68)));
         Controls.Add(searchBox);
         Controls.Add(Ui.NewLabel("Date:", new Point(340, 68)));

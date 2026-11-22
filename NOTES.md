@@ -16,7 +16,7 @@ Not built (from CLAUDE.md, for time reasons): organization settings, organizatio
 
 ## Differences from the ERD and class diagram
 
-1. **Organizations** are not in the ERD. They are a prototype, stored in the added tables `organizations` and `memberships`. Calculations carry an `OrganizationID` so history is scoped by organization. Labelled PROTOTYPE in the UI.
+1. Organizations were removed; history is scoped per user only (the `organizations`, `memberships` tables and `calculations.organization_id` column are no longer used).
 2. **Location coordinates** are strings, as in the class diagram. Numeric types would be better for calculations. Values are validated on entry (-90..90, -180..180).
 3. **SolarPanel `Description`** appears twice in the class diagram. It is modelled once.
 4. **Location** has `OwnerUserID` from the ERD (user to locations). In code it is named `SiteLocation` to avoid clashing with WinForms `Control.Location`.

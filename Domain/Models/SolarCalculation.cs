@@ -8,7 +8,6 @@ public class SolarCalculation
     public override int GetHashCode() => CalculationID > 0 ? CalculationID.GetHashCode() : base.GetHashCode();
     public int CalculationID { get; set; }
     public int OwnerUserID { get; set; }
-    public int OrganizationID { get; set; }     // 0 = no organization (prototype extension)
     public string ProjectName { get; set; } = "";
     public SiteLocation Location { get; set; }
     public SolarPanel PanelType { get; set; }

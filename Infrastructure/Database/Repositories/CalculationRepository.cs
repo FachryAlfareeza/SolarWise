@@ -2,13 +2,13 @@ using SolarWise.Database;
 
 namespace SolarWise;
 
-// Calculations (scoped to the current user and active organization). Stored in Supabase (table calculations).
+// Calculations (scoped to the current user). Stored in Supabase (table calculations).
 public static class CalculationRepository
 {
     private static readonly CalculationDbRepository Db = new();
 
     public static List<SolarCalculation> CalculationsFor(User user) =>
-        Hydrate(Db.ForUser(user.UserID, SessionContext.ActiveOrganizationId));
+        Hydrate(Db.ForUser(user.UserID));
 
     public static void SaveCalculation(SolarCalculation calc)
     {
