@@ -6,13 +6,13 @@ public static class SolarCalculator
 {
     public const double PerformanceRatio = 0.80;    // assumed overall system losses
     public const double TariffPerKwh = 1444.70;     // assumed IDR/kWh; confirm against the current PLN tariff
-    public const double DefaultIrradiance = 4.8;    // kWh/m²/day; used only when no weather record exists (sample)
+    public const double DefaultIrradiance = 4.8;    // kWh/m²/day; fallback when no saved NASA POWER data exists
     public const double AnnualDegradation = 0.005;  // 0.5 % output loss per year
 
     // m² per panel at standard test conditions (1000 W/m²).
     public static double PanelArea(SolarPanel panel) => panel.Wattage / (1000.0 * panel.Efficiency / 100.0);
 
-    // getAverageIrradiance(): average of saved weather records, or the sample default.
+    // Prefer the day-weighted annual average of NASA POWER monthly climatology; use the fallback only when absent.
     public static double AverageIrradiance(SiteLocation site) =>
         WeatherService.SavedIrradiance(site) ?? DefaultIrradiance;
 

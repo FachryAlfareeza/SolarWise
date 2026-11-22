@@ -10,11 +10,10 @@ public class WeatherView : ViewBase
     private readonly Label sunshineValue = Ui.NewLabel("-", new Point(230, 78));
     private readonly Label averageValue = Ui.NewLabel("-", new Point(230, 104));
     private readonly Label sourceValue = Ui.NewLabel("-", new Point(230, 130));
-    private readonly ClassicButton fetchButton;
 
     public WeatherView(MainForm host) : base(host, "Weather Data")
     {
-        AddHeader("Weather Data", "Weather values appear only when retrieved from a data source. No live weather API is connected in this prototype.");
+        AddHeader("Weather Data", "View saved weather or monthly solar climatology for one of your locations.");
 
         var location = Ui.NewGroup("Location and Date", new Rectangle(16, 70, 800, 96));
         location.Controls.Add(Ui.NewLabel("Location:", new Point(20, 28)));
@@ -37,14 +36,13 @@ public class WeatherView : ViewBase
         values.Controls.Add(sourceValue);
         Controls.Add(values);
 
-        fetchButton = Ui.NewButton("Fetch Weather Data", new Point(16, 356), (_, _) => Fetch(), 150, true);
-        Controls.Add(fetchButton);
+        Controls.Add(Ui.NewButton("Fetch Weather Data", new Point(16, 356), (_, _) => Fetch(), 150, true));
         Controls.Add(Ui.NewButton("Refresh", new Point(174, 356), (_, _) => ShowRecord(), 90));
         Controls.Add(Ui.NewButton("Load Sample Data", new Point(272, 356), (_, _) => LoadSample(), 140));
         Controls.Add(Ui.NewButton("Close", new Point(420, 356), (_, _) => Host.OpenSection("Home"), 90));
 
         var note = Ui.NewLabel(
-            "Sample data is labelled as sample and is not live weather data. It is used only when a location has no weather record.",
+            "Region search and NASA POWER monthly climatology are managed from Locations. Climatology provides irradiance only; temperature and sunshine duration are not supplied here.",
             new Point(16, 400), null, Color.FromArgb(64, 64, 64));
         note.MaximumSize = new Size(800, 0);
         Controls.Add(note);
@@ -76,8 +74,8 @@ public class WeatherView : ViewBase
             return;
         }
 
-        var average = WeatherRepository.ForLocation(site);
-        averageValue.Text = average.Count == 0 ? "No saved records" : Theme.Num(average.Average(w => w.SolarIrradiance), "0.00");
+        var average = WeatherService.SavedIrradiance(site);
+        averageValue.Text = average.HasValue ? Theme.Num(average.Value, "0.00") : "No saved records";
 
         var record = WeatherService.WeatherFor(site, datePicker.Value);
         if (record == null)
@@ -90,31 +88,19 @@ public class WeatherView : ViewBase
         }
 
         irradianceValue.Text = Theme.Num(record.SolarIrradiance, "0.00");
-        temperatureValue.Text = Theme.Num(record.Temperature, "0.0");
-        sunshineValue.Text = Theme.Num(record.SunshineHours, "0.0");
-        sourceValue.Text = record.IsSample ? "SAMPLE data (not live)" : "Saved weather data";
-        statusLabel.Text = record.IsSample ? "Status: sample data loaded" : "Status: loaded";
+        temperatureValue.Text = record.Temperature == 0 ? "-" : Theme.Num(record.Temperature, "0.0");
+        sunshineValue.Text = record.SunshineHours == 0 ? "-" : Theme.Num(record.SunshineHours, "0.0");
+
+        bool climatology = record.Date.Year == WeatherRepository.ClimatologyDateYear;
+        sourceValue.Text = record.IsSample ? "SAMPLE data (not live)" : climatology ? "NASA POWER monthly climatology" : "Saved weather data";
+        statusLabel.Text = record.IsSample ? "Status: sample data loaded" : climatology ? "Status: climatology for selected month" : "Status: loaded";
         statusLabel.ForeColor = record.IsSample ? Color.Black : Theme.SuccessGreen;
     }
 
     private void Fetch()
     {
-        var site = SelectedSite;
-        if (site == null)
-        {
-            ClassicMessage.Info(this, "Add a location first.", "Fetch Weather Data");
-            return;
-        }
-
-        // Loading state, then the honest result: no weather API is connected.
-        statusLabel.Text = "Status: loading...";
-        statusLabel.ForeColor = Color.Black;
-        Application.DoEvents();
-
-        statusLabel.Text = "Status: unavailable";
-        statusLabel.ForeColor = Theme.ErrorRed;
-        ClassicMessage.Error(this,
-            "Weather data unavailable. No weather API is connected in this prototype, so no live values were retrieved.",
+        ClassicMessage.Info(this,
+            "To search a region and fetch NASA POWER monthly solar climatology, open Locations.",
             "Fetch Weather Data");
     }
 
@@ -126,7 +112,8 @@ public class WeatherView : ViewBase
             ClassicMessage.Info(this, "Add a location first.", "Load Sample Data");
             return;
         }
-        if (WeatherService.WeatherFor(site, datePicker.Value) != null)
+        if (WeatherService.WeatherFor(site, datePicker.Value) is { } record &&
+            record.Date.Date == datePicker.Value.Date)
         {
             ClassicMessage.Info(this, "A weather record already exists for this location and date.", "Load Sample Data");
             return;
