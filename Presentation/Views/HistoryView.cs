@@ -51,7 +51,7 @@ public class HistoryView : ViewBase
              || c.ProjectName.Contains(text, StringComparison.OrdinalIgnoreCase)
              || c.Location.Address.Contains(text, StringComparison.OrdinalIgnoreCase))
             && (days == null || c.CreatedAt >= DateTime.Now.AddDays(-days.Value))
-            && (panel == null || c.PanelType == panel));
+            && (panel == null || c.PanelType.PanelID == panel.PanelID));
 
         list.Items.Clear();
         foreach (var c in calcs)

@@ -42,11 +42,9 @@ public class CalculationResultsForm : ClassicForm
         Content.Controls.Add(note);
 
         saveButton = Ui.NewButton("Save Calculation...", new Point(16, 530), (_, _) => Save(), 140, true);
-        var download = Ui.NewButton("Download Report", new Point(164, 530), (_, _) => ClassicMessage.Info(this,
-            "Report export is not implemented in this prototype. No file was created.", "Download Report"), 130);
-        var recalculate = Ui.NewButton("Recalculate", new Point(302, 530), (_, _) => Finish(DialogResult.Retry), 100);
+        var recalculate = Ui.NewButton("Recalculate", new Point(164, 530), (_, _) => Finish(DialogResult.Retry), 100);
         var close = Ui.NewButton("Close", new Point(548, 530), (_, _) => Finish(DialogResult.Cancel), 80);
-        Content.Controls.AddRange(new Control[] { saveButton, download, recalculate, close });
+        Content.Controls.AddRange(new Control[] { saveButton, recalculate, close });
         saveButton.Enabled = !calc.IsSaved;
         CancelButton = close;
     }
@@ -62,7 +60,7 @@ public class CalculationResultsForm : ClassicForm
 
 }
 
-// Calculation Details: read-only view of a saved calculation with report, recalculate and delete.
+// Calculation Details: read-only view of a saved calculation with recalculate and delete.
 public class CalculationDetailsDialog : ClassicForm
 {
     private readonly SolarCalculation calc;
@@ -86,12 +84,10 @@ public class CalculationDetailsDialog : ClassicForm
         Ui.AddPair(group, 16, ref y, "Data status", Ui.StatusOf(calc));
         Content.Controls.Add(group);
 
-        var download = Ui.NewButton("Download Report", new Point(16, 380), (_, _) => ClassicMessage.Info(this,
-            "Report export is not implemented in this prototype. No file was created.", "Download Report"), 130);
-        var recalculate = Ui.NewButton("Recalculate", new Point(154, 380), (_, _) => Finish(DialogResult.Retry), 100);
-        var delete = Ui.NewButton("Delete", new Point(262, 380), (_, _) => Delete(), 90);
+        var recalculate = Ui.NewButton("Recalculate", new Point(16, 380), (_, _) => Finish(DialogResult.Retry), 100);
+        var delete = Ui.NewButton("Delete", new Point(124, 380), (_, _) => Delete(), 90);
         var back = Ui.NewButton("Back", new Point(440, 380), (_, _) => Finish(DialogResult.Cancel), 84);
-        Content.Controls.AddRange(new Control[] { download, recalculate, delete, back });
+        Content.Controls.AddRange(new Control[] { recalculate, delete, back });
         CancelButton = back;
     }
 
