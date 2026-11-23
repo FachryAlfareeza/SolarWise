@@ -52,6 +52,15 @@ public class LoginForm : ClassicForm
         Content.Controls.Add(signIn);
         AcceptButton = loginButton;
         passwordBox.KeyDown += (_, e) => { if (e.KeyCode == Keys.Enter) e.SuppressKeyPress = true; };
+
+        // Restore the login saved with "Remember me" and start in the password box.
+        string remembered = LocalSettings.RememberedLogin;
+        if (remembered != null)
+        {
+            loginBox.Text = remembered;
+            rememberBox.Checked = true;
+            Shown += (_, _) => passwordBox.Focus();
+        }
     }
 
     private void Login()
@@ -72,6 +81,9 @@ public class LoginForm : ClassicForm
             passwordBox.Focus();
             return;
         }
+
+        // Remember exactly what was typed (email or username); unticking forgets it.
+        LocalSettings.RememberedLogin = rememberBox.Checked ? login : null;
 
         SessionContext.CurrentUser = user;
         Finish(DialogResult.OK);

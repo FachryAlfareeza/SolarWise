@@ -12,7 +12,7 @@ Demo accounts (sample data):
 
 Built: login, registration, forgot password, organization selection, main window (menu, navigation, status bar), home dashboard, locations, solar panel catalog (admin edits), solar PV calculator (3 steps), calculation results with a 10-year savings chart, calculation history and details, recommendations, weather data (honest "unavailable" state), user management (admin), organizations (prototype), settings, UI component library.
 
-Not built (from CLAUDE.md, for time reasons): organization settings, organization members and invitations, PDF report generation, a map picker, and window resizing/maximize (layouts are fixed-size).
+Not built (from CLAUDE.md, for time reasons): organization settings, organization members and invitations, PDF report generation, and a map picker. The main window can be resized and maximized, but most screens keep a fixed layout and do not stretch to fill the extra space.
 
 ## Differences from the ERD and class diagram
 

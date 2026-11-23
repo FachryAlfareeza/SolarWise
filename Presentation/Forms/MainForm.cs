@@ -25,7 +25,7 @@ public class MainForm : ClassicForm
     private readonly Panel viewHost = new() { Dock = DockStyle.Fill, BackColor = Theme.WindowGray };
     private ViewBase currentView;
 
-    public MainForm() : base("SolarWise", 1000, 640)
+    public MainForm() : base("SolarWise", 1000, 640, resizable: true)
     {
         BuildMenu();
         BuildNavigation();
@@ -41,6 +41,7 @@ public class MainForm : ClassicForm
 
         RefreshStatus();
         navList.SelectedIndex = 0;
+        if (LocalSettings.StartMaximized) WindowState = FormWindowState.Maximized;
     }
 
     public bool LogoutRequested { get; private set; }
@@ -92,6 +93,12 @@ public class MainForm : ClassicForm
         Close();
     }
 
+    public void OpenPreferences()
+    {
+        using var dialog = new PreferencesDialog();
+        dialog.ShowDialog(this);
+    }
+
     public void OpenComponentLibrary()
     {
         using var library = new ComponentLibraryForm();
@@ -109,7 +116,7 @@ public class MainForm : ClassicForm
 
         menuStrip.Items.Add(Menu("Edit",
             Item("User Profile", (_, _) => OpenSection("Settings")),
-            Item("Preferences", (_, _) => OpenSection("Settings"))));
+            Item("Preferences...", (_, _) => OpenPreferences())));
 
         menuStrip.Items.Add(Menu("Help",
             Item("User Guide", (_, _) => ClassicMessage.Info(this,
