@@ -18,3 +18,8 @@ Thumbs.db
 ~$*
 
 .env
+# Published builds (the exe has the database settings built in)
+dist/
+
+# Local .NET CLI home used for builds
+.dotnet-home/

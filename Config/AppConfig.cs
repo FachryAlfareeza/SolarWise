@@ -2,14 +2,20 @@ using DotNetEnv;
 
 namespace SolarWise;
 
-// Application settings read from the .env file (found by searching upward from the run folder).
+// Application settings. A .env file (found by searching upward from the run folder) is used when
+// present; otherwise the copy of .env built into the exe at compile time (see SolarWise.csproj).
 // Keys: host, port, database, user, password. The older DB_HOST, DB_PORT, DB_NAME, DB_USER and
 // DB_PASSWORD keys still work as a fallback.
 public static class AppConfig
 {
     static AppConfig()
     {
-        Env.TraversePath().Load();
+        if (Env.TraversePath().Load().Any()) return;
+
+        using var stream = typeof(AppConfig).Assembly.GetManifestResourceStream("SolarWise.settings.env");
+        if (stream == null) return; // built without a .env: the connection test reports the missing settings
+        using var reader = new StreamReader(stream);
+        Env.LoadContents(reader.ReadToEnd());
     }
 
     public static string DbHost => Get("host", "DB_HOST");
