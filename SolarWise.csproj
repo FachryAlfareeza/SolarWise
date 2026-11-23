@@ -14,6 +14,15 @@
     <PackageReference Include="Npgsql" Version="10.0.3" />
   </ItemGroup>
 
+  <!-- The database settings in .env (git-ignored) are built into the exe, so it can ship without the file.
+       A .env placed next to the exe still overrides them. -->
+  <ItemGroup>
+    <EmbeddedResource Include=".env" LogicalName="SolarWise.settings.env" Condition="Exists('.env')" />
+  </ItemGroup>
+  <Target Name="WarnMissingEnv" BeforeTargets="BeforeBuild" Condition="!Exists('.env')">
+    <Warning Text="No .env file in the project folder: this build has no database settings built in and needs a .env next to the exe." />
+  </Target>
+
   <!-- This is the legacy WinForms project. Do not compile generated sources from nested projects. -->
   <ItemGroup>
     <Compile Remove="src/**/*.cs" />
