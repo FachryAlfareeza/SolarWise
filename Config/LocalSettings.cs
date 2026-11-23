@@ -3,7 +3,7 @@ using System.Text.Json;
 namespace SolarWise;
 
 // Small per-Windows-user settings kept on this computer (%LOCALAPPDATA%\SolarWise\settings.json).
-// Only the remembered email/username is stored here; the password is never saved.
+// Holds the remembered email/username (never the password) and window preferences.
 public static class LocalSettings
 {
     private static readonly string FilePath = Path.Combine(
@@ -12,6 +12,19 @@ public static class LocalSettings
     private sealed class Data
     {
         public string RememberedLogin { get; set; }
+        public bool StartMaximized { get; set; }
+    }
+
+    // Open the main window maximized after login.
+    public static bool StartMaximized
+    {
+        get => Load().StartMaximized;
+        set
+        {
+            var data = Load();
+            data.StartMaximized = value;
+            Save(data);
+        }
     }
 
     // The email/username saved with "Remember me", or null when nothing is remembered.

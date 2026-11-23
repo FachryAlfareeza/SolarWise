@@ -12,7 +12,7 @@ public class SettingsView : ViewBase
 
     public SettingsView(MainForm host) : base(host, "Settings")
     {
-        AddHeader("User Settings", "Changes are kept in memory for this prototype.");
+        AddHeader("User Settings", "Your profile and password, saved to your account.");
 
         var profile = Ui.NewGroup("Profile", new Rectangle(16, 70, 800, 152));
         profile.Controls.Add(Ui.NewLabel("Full name:", new Point(20, 27)));
@@ -38,7 +38,7 @@ public class SettingsView : ViewBase
         password.Controls.Add(hint);
         Controls.Add(password);
 
-        Controls.Add(Ui.NewLabel("Display preferences are not supported in this prototype.", new Point(16, 398), null, Color.FromArgb(64, 64, 64)));
+        Controls.Add(Ui.NewLabel("Window and login preferences are under Edit > Preferences.", new Point(16, 398), null, Color.FromArgb(64, 64, 64)));
         Controls.Add(Ui.NewButton("Save", new Point(16, 430), (_, _) => Save(), 100, true));
         Controls.Add(Ui.NewButton("Cancel", new Point(124, 430), (_, _) => Reload(), 100));
         Controls.Add(Ui.NewButton("Logout", new Point(716, 430), (_, _) => Host.Logout(), 100));
